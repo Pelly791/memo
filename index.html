@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Мемори: Игрушки</title>
     <style>
         * {
@@ -18,7 +18,9 @@
             overflow: hidden;
             font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
             touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         .game-container {
@@ -91,17 +93,18 @@
             align-items: center;
             overflow: hidden;
             min-height: 0;
+            padding: 5px;
         }
         
         .game-board {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(5, 1fr);
-            grid-gap: 6px;
+            grid-gap: 8px;
             width: 100%;
             height: 100%;
-            max-width: 95%;
-            max-height: 95%;
+            max-width: 100%;
+            max-height: 100%;
             margin: 0 auto;
             perspective: 1000px;
         }
@@ -109,12 +112,14 @@
         .card {
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.5s;
+            transition: transform 0.5s ease;
             cursor: pointer;
             border-radius: 8px;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-            min-height: 40px;
+            min-height: 50px;
+            min-width: 40px;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .card.flipped {
@@ -124,6 +129,7 @@
         .card.matched {
             transform: rotateY(180deg);
             box-shadow: 0 0 12px #4caf50;
+            cursor: default;
         }
         
         .card-front, .card-back {
@@ -135,6 +141,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 2px solid white;
         }
         
         .card-front {
@@ -147,12 +154,13 @@
             width: 70%;
             height: 70%;
             object-fit: contain;
+            pointer-events: none;
         }
         
         .card-back {
             background: linear-gradient(45deg, #2196F3, #21CBF3);
             color: white;
-            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-size: clamp(1.5rem, 5vw, 2rem);
             font-weight: bold;
         }
         
@@ -169,24 +177,19 @@
             background: linear-gradient(45deg, #FF9800, #FF5722);
             color: white;
             border: none;
-            padding: 8px 16px;
-            font-size: clamp(0.8rem, 3vw, 1rem);
+            padding: 12px 20px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
             border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
             min-height: 44px;
-            min-width: 44px;
+            min-width: 120px;
             touch-action: manipulation;
         }
         
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-        }
-        
         button:active {
-            transform: translateY(1px);
+            transform: scale(0.95);
         }
         
         .win-message {
@@ -195,7 +198,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -247,164 +250,78 @@
             .game-board {
                 grid-template-columns: repeat(5, 1fr);
                 grid-template-rows: repeat(6, 1fr);
-                grid-gap: 5px;
+                grid-gap: 6px;
             }
         }
         
         @media (max-width: 768px) {
             .game-container {
-                padding: 8px;
+                padding: 5px;
             }
             
             .game-board {
                 grid-template-columns: repeat(4, 1fr);
                 grid-template-rows: repeat(7, 1fr);
-                grid-gap: 4px;
+                grid-gap: 5px;
             }
             
-            .game-info {
-                padding: 6px 12px;
-                margin-bottom: 6px;
-            }
-            
-            .controls {
-                gap: 8px;
-            }
-            
-            button {
-                padding: 6px 12px;
-                min-height: 40px;
+            .card {
+                min-height: 45px;
             }
         }
         
         @media (max-width: 480px) {
-            .game-container {
-                padding: 5px;
-            }
-            
             .game-board {
                 grid-template-columns: repeat(3, 1fr);
                 grid-template-rows: repeat(10, 1fr);
-                grid-gap: 3px;
+                grid-gap: 4px;
             }
             
-            .header {
-                padding: 3px 0;
-            }
-            
-            h1 {
-                margin-bottom: 2px;
-            }
-            
-            .subtitle {
-                margin-bottom: 5px;
-            }
-            
-            .game-info {
-                padding: 5px 10px;
-                margin-bottom: 5px;
-                max-width: 95%;
-            }
-            
-            .controls {
-                margin-top: 5px;
-                gap: 6px;
-            }
-            
-            button {
-                padding: 5px 10px;
-                font-size: 0.9rem;
-                min-height: 36px;
+            .card {
+                min-height: 40px;
             }
             
             .card-back {
-                font-size: 1.2rem;
+                font-size: 1.3rem;
             }
         }
         
         @media (max-width: 360px) {
             .game-board {
-                grid-template-columns: repeat(3, 1fr);
-                grid-template-rows: repeat(10, 1fr);
-                grid-gap: 2px;
+                grid-gap: 3px;
             }
             
-            .card-back {
-                font-size: 1rem;
-            }
-        }
-        
-        /* Портретная ориентация */
-        @media (max-height: 600px) and (orientation: portrait) {
-            .header {
-                padding: 2px 0;
-            }
-            
-            .game-info {
-                padding: 4px 8px;
-                margin-bottom: 4px;
-            }
-            
-            .controls {
-                margin-top: 4px;
-                padding: 2px 0;
-            }
-            
-            button {
-                padding: 4px 8px;
-                min-height: 32px;
+            .card {
+                min-height: 35px;
             }
         }
         
         /* Ландшафтная ориентация для мобильных */
         @media (max-width: 900px) and (orientation: landscape) {
-            .game-container {
-                padding: 5px;
+            .game-board {
+                grid-template-columns: repeat(8, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                grid-gap: 4px;
             }
             
             .header {
                 padding: 2px 0;
-                flex-shrink: 0;
-            }
-            
-            h1 {
-                font-size: 1.2rem;
-                margin-bottom: 1px;
-            }
-            
-            .subtitle {
-                font-size: 0.8rem;
-                margin-bottom: 3px;
             }
             
             .game-info {
-                padding: 4px 10px;
-                margin-bottom: 3px;
-                font-size: 0.8rem;
-            }
-            
-            .game-board {
-                grid-template-columns: repeat(8, 1fr);
-                grid-template-rows: repeat(4, 1fr);
-                grid-gap: 3px;
-            }
-            
-            .controls {
-                margin-top: 3px;
-                padding: 2px 0;
-            }
-            
-            button {
-                padding: 4px 8px;
-                font-size: 0.8rem;
-                min-height: 30px;
+                padding: 5px 10px;
+                margin-bottom: 4px;
             }
         }
         
-        /* Предотвращение масштабирования на iOS */
+        /* Исправление для iOS */
         @supports (-webkit-touch-callout: none) {
             .game-container {
                 min-height: -webkit-fill-available;
+            }
+            
+            .card {
+                -webkit-touch-callout: none;
             }
         }
     </style>
@@ -491,29 +408,9 @@
                 { name: 'unicorn', sound: 'unicorn' }
             ];
 
-            // Адаптивная сетка для разных размеров экрана
-            function getGridConfig() {
-                const width = window.innerWidth;
-                const height = window.innerHeight;
-                const isLandscape = width > height;
-                
-                if (width <= 360) {
-                    return { cols: 3, rows: 10 };
-                } else if (width <= 480) {
-                    return { cols: 3, rows: 10 };
-                } else if (width <= 768) {
-                    if (isLandscape) {
-                        return { cols: 6, rows: 5 };
-                    }
-                    return { cols: 4, rows: 7 };
-                } else if (width <= 1024) {
-                    if (isLandscape) {
-                        return { cols: 8, rows: 4 };
-                    }
-                    return { cols: 5, rows: 6 };
-                } else {
-                    return { cols: 6, rows: 5 };
-                }
+            // Функция для определения типа устройства
+            function isTouchDevice() {
+                return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             }
             
             // Инициализация аудио
@@ -536,6 +433,7 @@
                     toys.forEach(toy => {
                         const audio = new Audio(`audio/${toy.sound}.wav`);
                         audio.volume = 0.5;
+                        audio.preload = 'auto';
                         toySounds[toy.name] = audio;
                     });
                 } catch (e) {
@@ -548,9 +446,13 @@
             // Воспроизведение фоновой музыки
             function playBackgroundMusic() {
                 if (soundEnabled && backgroundMusic) {
-                    backgroundMusic.play().catch(e => {
-                        console.log('Автовоспроизведение заблокировано, требуется взаимодействие пользователя');
-                    });
+                    // Для мобильных устройств требуется взаимодействие пользователя
+                    document.body.addEventListener('click', function startMusic() {
+                        backgroundMusic.play().catch(e => {
+                            console.log('Автовоспроизведение заблокировано');
+                        });
+                        document.body.removeEventListener('click', startMusic);
+                    }, { once: true });
                 }
             }
             
@@ -569,11 +471,6 @@
                 // Очищаем игровое поле
                 gameBoard.innerHTML = '';
                 
-                // Получаем конфигурацию сетки
-                const gridConfig = getGridConfig();
-                gameBoard.style.gridTemplateColumns = `repeat(${gridConfig.cols}, 1fr)`;
-                gameBoard.style.gridTemplateRows = `repeat(${gridConfig.rows}, 1fr)`;
-                
                 // Создаем HTML для каждой карточки
                 cardPairs.forEach((toyName, index) => {
                     const card = document.createElement('div');
@@ -590,10 +487,17 @@
                         </div>
                     `;
                     
-                    card.addEventListener('click', flipCard);
-                    card.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                    }, { passive: false });
+                    // Добавляем обработчики для touch и click
+                    if (isTouchDevice()) {
+                        // Для touch-устройств
+                        card.addEventListener('touchstart', handleCardTouch, { passive: true });
+                    } else {
+                        // Для desktop
+                        card.addEventListener('click', handleCardClick);
+                    }
+                    
+                    // Добавляем обработчик click для совместимости
+                    card.addEventListener('click', handleCardClick);
                     
                     gameBoard.appendChild(card);
                 });
@@ -602,8 +506,21 @@
                 cards = Array.from(document.querySelectorAll('.card'));
             }
             
+            // Обработчик для touch устройств
+            function handleCardTouch(e) {
+                e.preventDefault();
+                const card = e.currentTarget;
+                flipCard(card);
+            }
+            
+            // Обработчик для click
+            function handleCardClick(e) {
+                const card = e.currentTarget;
+                flipCard(card);
+            }
+            
             // Переворот карточки
-            function flipCard() {
+            function flipCard(card) {
                 // Если игра не начата, запускаем таймер
                 if (!gameStarted) {
                     startTimer();
@@ -612,7 +529,7 @@
                 }
                 
                 // Если карточка уже перевернута или совпала, игнорируем клик
-                if (this.classList.contains('flipped') || this.classList.contains('matched')) {
+                if (card.classList.contains('flipped') || card.classList.contains('matched')) {
                     return;
                 }
                 
@@ -622,8 +539,8 @@
                 }
                 
                 // Переворачиваем карточку
-                this.classList.add('flipped');
-                flippedCards.push(this);
+                card.classList.add('flipped');
+                flippedCards.push(card);
                 
                 // Воспроизводим звук переворота
                 if (soundEnabled) {
@@ -632,7 +549,7 @@
                 
                 // Воспроизводим звук игрушки при открытии карточки
                 if (soundEnabled) {
-                    playToySound(this.dataset.toy);
+                    playToySound(card.dataset.toy);
                 }
                 
                 // Если перевернуто 2 карточки, проверяем на совпадение
@@ -745,10 +662,7 @@
                     // Создаем клон звука для одновременного воспроизведения
                     const soundClone = flipSound.cloneNode();
                     soundClone.volume = 0.4;
-                    // Добавляем небольшое случайное смещение по времени
-                    setTimeout(() => {
-                        soundClone.play().catch(e => console.log('Ошибка воспроизведения звука переворота'));
-                    }, Math.random() * 50);
+                    soundClone.play().catch(e => console.log('Ошибка воспроизведения звука переворота'));
                 } catch (e) {
                     console.error('Ошибка воспроизведения звука переворота:', e);
                 }
@@ -763,10 +677,7 @@
                     // Создаем клон звука для одновременного воспроизведения
                     const soundClone = sound.cloneNode();
                     soundClone.volume = 0.5;
-                    // Небольшая задержка для лучшего восприятия
-                    setTimeout(() => {
-                        soundClone.play().catch(e => console.log(`Ошибка воспроизведения звука ${toyName}`));
-                    }, 100);
+                    soundClone.play().catch(e => console.log(`Ошибка воспроизведения звука ${toyName}`));
                 } catch (e) {
                     console.error('Ошибка воспроизведения звука игрушки:', e);
                 }
@@ -821,23 +732,22 @@
                 }
             }
             
-            // Обработчики событий
+            // Обработчики событий для кнопок
             restartBtn.addEventListener('click', startNewGame);
             playAgainBtn.addEventListener('click', startNewGame);
             soundBtn.addEventListener('click', toggleSound);
             
-            // Адаптация к изменению размера окна
-            window.addEventListener('resize', createCards);
-            window.addEventListener('orientationchange', function() {
-                setTimeout(createCards, 100);
-            });
-            
-            // Предотвращение масштабирования на мобильных
+            // Оптимизация для мобильных
             document.addEventListener('touchmove', function(e) {
                 if (e.scale !== 1) {
                     e.preventDefault();
                 }
             }, { passive: false });
+            
+            // Предотвращение контекстного меню на мобильных
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
             
             // Начало игры при загрузке страницы
             initAudio();
