@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мемори: Игрушки</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('img/body.png');
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .container {
+            width: 100%;
+            text-align: center;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 100%;
+        }
+        
+        .header {
+            flex-shrink: 0;
+            padding: 5px 0;
+        }
+        
+        h1 {
+            color: white;
+            font-size: clamp(1.2rem, 4vw, 2.5rem);
+            margin-bottom: 3px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            line-height: 1.2;
+        }
+        
+        .subtitle {
+            color: #ffeb3b;
+            font-size: clamp(0.8rem, 3vw, 1.1rem);
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            line-height: 1.2;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+            color: white;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            flex-shrink: 0;
+        }
+        
+        .game-board-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            grid-gap: 6px;
+            width: 100%;
+            height: 100%;
+            max-width: 95%;
+            max-height: 95%;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+        
+        .card {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            min-height: 40px;
+            touch-action: manipulation;
+        }
+        
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card.matched {
+            transform: rotateY(180deg);
+            box-shadow: 0 0 12px #4caf50;
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-front {
+            background: linear-gradient(45deg, #ff4081, #7c4dff);
+            transform: rotateY(180deg);
+            overflow: hidden;
+        }
+        
+        .card-front img {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+        }
+        
+        .card-back {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            color: white;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: bold;
+        }
+        
+        .controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 5px 0;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #FF9800, #FF5722);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .win-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+            display: none;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .win-message h2 {
+            margin-bottom: 15px;
+            color: #ffeb3b;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.7);
+            font-size: clamp(1.8rem, 6vw, 3rem);
+            line-height: 1.2;
+        }
+        
+        .win-message p {
+            margin-bottom: 10px;
+            font-size: clamp(1rem, 4vw, 1.8rem);
+            line-height: 1.3;
+        }
+        
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            box-shadow: 0 0 8px 2px;
+            animation: explode 1s forwards;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 1024px) {
+            .game-board {
+                grid-template-columns: repeat(5, 1fr);
+                grid-template-rows: repeat(6, 1fr);
+                grid-gap: 5px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 8px;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(7, 1fr);
+                grid-gap: 4px;
+            }
+            
+            .game-info {
+                padding: 6px 12px;
+                margin-bottom: 6px;
+            }
+            
+            .controls {
+                gap: 8px;
+            }
+            
+            button {
+                padding: 6px 12px;
+                min-height: 40px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 5px;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(10, 1fr);
+                grid-gap: 3px;
+            }
+            
+            .header {
+                padding: 3px 0;
+            }
+            
+            h1 {
+                margin-bottom: 2px;
+            }
+            
+            .subtitle {
+                margin-bottom: 5px;
+            }
+            
+            .game-info {
+                padding: 5px 10px;
+                margin-bottom: 5px;
+                max-width: 95%;
+            }
+            
+            .controls {
+                margin-top: 5px;
+                gap: 6px;
+            }
+            
+            button {
+                padding: 5px 10px;
+                font-size: 0.9rem;
+                min-height: 36px;
+            }
+            
+            .card-back {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(10, 1fr);
+                grid-gap: 2px;
+            }
+            
+            .card-back {
+                font-size: 1rem;
+            }
+        }
+        
+        /* Портретная ориентация */
+        @media (max-height: 600px) and (orientation: portrait) {
+            .header {
+                padding: 2px 0;
+            }
+            
+            .game-info {
+                padding: 4px 8px;
+                margin-bottom: 4px;
+            }
+            
+            .controls {
+                margin-top: 4px;
+                padding: 2px 0;
+            }
+            
+            button {
+                padding: 4px 8px;
+                min-height: 32px;
+            }
+        }
+        
+        /* Ландшафтная ориентация для мобильных */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .game-container {
+                padding: 5px;
+            }
+            
+            .header {
+                padding: 2px 0;
+                flex-shrink: 0;
+            }
+            
+            h1 {
+                font-size: 1.2rem;
+                margin-bottom: 1px;
+            }
+            
+            .subtitle {
+                font-size: 0.8rem;
+                margin-bottom: 3px;
+            }
+            
+            .game-info {
+                padding: 4px 10px;
+                margin-bottom: 3px;
+                font-size: 0.8rem;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(8, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                grid-gap: 3px;
+            }
+            
+            .controls {
+                margin-top: 3px;
+                padding: 2px 0;
+            }
+            
+            button {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+                min-height: 30px;
+            }
+        }
+        
+        /* Предотвращение масштабирования на iOS */
+        @supports (-webkit-touch-callout: none) {
+            .game-container {
+                min-height: -webkit-fill-available;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="container">
+            <div class="header">
+                <h1>Мемори: Игрушки</h1>
+                <p class="subtitle">Найди все пары игрушек!</p>
+            </div>
+            
+            <div class="game-info">
+                <div class="moves">Ходы: <span id="moves-count">0</span></div>
+                <div class="timer">Время: <span id="timer">00:00</span></div>
+            </div>
+            
+            <div class="game-board-container">
+                <div class="game-board" id="game-board">
+                    <!-- Карточки будут сгенерированы скриптом -->
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="restart-btn">Новая игра</button>
+                <button id="sound-btn">Звук: Вкл</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="win-message" id="win-message">
+        <h2>Поздравляем!</h2>
+        <p>Вы нашли все пары!</p>
+        <p>Ходы: <span id="final-moves">0</span></p>
+        <p>Время: <span id="final-time">00:00</span></p>
+        <button id="play-again-btn">Играть снова</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Элементы DOM
+            const gameBoard = document.getElementById('game-board');
+            const movesCount = document.getElementById('moves-count');
+            const timer = document.getElementById('timer');
+            const restartBtn = document.getElementById('restart-btn');
+            const soundBtn = document.getElementById('sound-btn');
+            const winMessage = document.getElementById('win-message');
+            const finalMoves = document.getElementById('final-moves');
+            const finalTime = document.getElementById('final-time');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            
+            // Состояние игры
+            let cards = [];
+            let flippedCards = [];
+            let moves = 0;
+            let matchedPairs = 0;
+            let gameStarted = false;
+            let timerInterval;
+            let seconds = 0;
+            let soundEnabled = true;
+            let backgroundMusic;
+            
+            // Звуковые объекты для каждой игрушки
+            const toySounds = {};
+            let flipSound;
+            let winSound;
+            
+            // Список игрушек (15 пар) с соответствием изображений и звуков
+            const toys = [
+                { name: 'ball', sound: 'ball' },
+                { name: 'ballerina', sound: 'ballerina' },
+                { name: 'dino', sound: 'dino' },
+                { name: 'doll', sound: 'doll' },
+                { name: 'jack_in_the_box', sound: 'jack' },
+                { name: 'kite', sound: 'kite' },
+                { name: 'plane', sound: 'plane' },
+                { name: 'puzzle', sound: 'puzzle' },
+                { name: 'robot', sound: 'robot' },
+                { name: 'rocket', sound: 'rocket' },
+                { name: 'rocking_horse', sound: 'horse' },
+                { name: 'soldier', sound: 'soldier' },
+                { name: 'teddy', sound: 'teddy' },
+                { name: 'train', sound: 'train' },
+                { name: 'unicorn', sound: 'unicorn' }
+            ];
+
+            // Адаптивная сетка для разных размеров экрана
+            function getGridConfig() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                const isLandscape = width > height;
+                
+                if (width <= 360) {
+                    return { cols: 3, rows: 10 };
+                } else if (width <= 480) {
+                    return { cols: 3, rows: 10 };
+                } else if (width <= 768) {
+                    if (isLandscape) {
+                        return { cols: 6, rows: 5 };
+                    }
+                    return { cols: 4, rows: 7 };
+                } else if (width <= 1024) {
+                    if (isLandscape) {
+                        return { cols: 8, rows: 4 };
+                    }
+                    return { cols: 5, rows: 6 };
+                } else {
+                    return { cols: 6, rows: 5 };
+                }
+            }
+            
+            // Инициализация аудио
+            function initAudio() {
+                try {
+                    // Создаем элемент для фоновой музыки
+                    backgroundMusic = new Audio('audio/body.mp3');
+                    backgroundMusic.loop = true;
+                    backgroundMusic.volume = 0.3;
+                    
+                    // Звук переворота карточки
+                    flipSound = new Audio('audio/flash.mp3');
+                    flipSound.volume = 0.4;
+                    
+                    // Звук победы
+                    winSound = new Audio('audio/win.mp3');
+                    winSound.volume = 0.5;
+                    
+                    // Предзагрузка звуков для каждой игрушки
+                    toys.forEach(toy => {
+                        const audio = new Audio(`audio/${toy.sound}.wav`);
+                        audio.volume = 0.5;
+                        toySounds[toy.name] = audio;
+                    });
+                } catch (e) {
+                    console.error('Ошибка инициализации аудио:', e);
+                    soundEnabled = false;
+                    soundBtn.textContent = 'Звук: Недоступен';
+                }
+            }
+            
+            // Воспроизведение фоновой музыки
+            function playBackgroundMusic() {
+                if (soundEnabled && backgroundMusic) {
+                    backgroundMusic.play().catch(e => {
+                        console.log('Автовоспроизведение заблокировано, требуется взаимодействие пользователя');
+                    });
+                }
+            }
+            
+            // Создание карточек
+            function createCards() {
+                // Создаем пары карточек
+                let cardPairs = [];
+                toys.forEach(toy => {
+                    cardPairs.push(toy.name);
+                    cardPairs.push(toy.name);
+                });
+                
+                // Перемешиваем карточки
+                cardPairs.sort(() => Math.random() - 0.5);
+                
+                // Очищаем игровое поле
+                gameBoard.innerHTML = '';
+                
+                // Получаем конфигурацию сетки
+                const gridConfig = getGridConfig();
+                gameBoard.style.gridTemplateColumns = `repeat(${gridConfig.cols}, 1fr)`;
+                gameBoard.style.gridTemplateRows = `repeat(${gridConfig.rows}, 1fr)`;
+                
+                // Создаем HTML для каждой карточки
+                cardPairs.forEach((toyName, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.toy = toyName;
+                    card.dataset.index = index;
+                    
+                    card.innerHTML = `
+                        <div class="card-front">
+                            <img src="img/${toyName}.png" alt="${toyName}" loading="lazy">
+                        </div>
+                        <div class="card-back">
+                            ?
+                        </div>
+                    `;
+                    
+                    card.addEventListener('click', flipCard);
+                    card.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                    }, { passive: false });
+                    
+                    gameBoard.appendChild(card);
+                });
+                
+                // Сохраняем ссылки на все карточки
+                cards = Array.from(document.querySelectorAll('.card'));
+            }
+            
+            // Переворот карточки
+            function flipCard() {
+                // Если игра не начата, запускаем таймер
+                if (!gameStarted) {
+                    startTimer();
+                    gameStarted = true;
+                    playBackgroundMusic();
+                }
+                
+                // Если карточка уже перевернута или совпала, игнорируем клик
+                if (this.classList.contains('flipped') || this.classList.contains('matched')) {
+                    return;
+                }
+                
+                // Если уже перевернуто 2 карточки, игнорируем клик
+                if (flippedCards.length === 2) {
+                    return;
+                }
+                
+                // Переворачиваем карточку
+                this.classList.add('flipped');
+                flippedCards.push(this);
+                
+                // Воспроизводим звук переворота
+                if (soundEnabled) {
+                    playFlipSound();
+                }
+                
+                // Воспроизводим звук игрушки при открытии карточки
+                if (soundEnabled) {
+                    playToySound(this.dataset.toy);
+                }
+                
+                // Если перевернуто 2 карточки, проверяем на совпадение
+                if (flippedCards.length === 2) {
+                    moves++;
+                    movesCount.textContent = moves;
+                    
+                    setTimeout(checkMatch, 500);
+                }
+            }
+            
+            // Проверка совпадения карточек
+            function checkMatch() {
+                const card1 = flippedCards[0];
+                const card2 = flippedCards[1];
+                
+                if (card1.dataset.toy === card2.dataset.toy) {
+                    // Карточки совпали
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    
+                    matchedPairs++;
+                    
+                    // Проверяем, завершена ли игра
+                    if (matchedPairs === toys.length) {
+                        endGame();
+                    }
+                } else {
+                    // Карточки не совпали
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                    }, 1000);
+                }
+                
+                // Очищаем массив перевернутых карточек
+                flippedCards = [];
+            }
+            
+            // Запуск таймера
+            function startTimer() {
+                seconds = 0;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    timer.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+            
+            // Завершение игры
+            function endGame() {
+                clearInterval(timerInterval);
+                
+                // Воспроизводим победный звук
+                if (soundEnabled) {
+                    playWinSound();
+                    if (backgroundMusic) {
+                        backgroundMusic.pause();
+                    }
+                }
+                
+                // Показываем победное сообщение
+                finalMoves.textContent = moves;
+                finalTime.textContent = timer.textContent;
+                
+                // Создаем салют
+                createFireworks();
+                
+                setTimeout(() => {
+                    winMessage.style.display = 'flex';
+                }, 1000);
+            }
+            
+            // Создание салюта
+            function createFireworks() {
+                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+                
+                for (let i = 0; i < 80; i++) {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    firework.style.backgroundColor = color;
+                    firework.style.boxShadow = `0 0 8px 2px ${color}`;
+                    
+                    const tx = (Math.random() - 0.5) * 300;
+                    const ty = (Math.random() - 0.5) * 300;
+                    firework.style.setProperty('--tx', `${tx}px`);
+                    firework.style.setProperty('--ty', `${ty}px`);
+                    
+                    firework.style.left = `${Math.random() * 100}vw`;
+                    firework.style.top = `${Math.random() * 100}vh`;
+                    
+                    document.body.appendChild(firework);
+                    
+                    // Удаляем элемент после анимации
+                    setTimeout(() => {
+                        firework.remove();
+                    }, 1000);
+                }
+            }
+            
+            // Воспроизведение звука переворота карточки
+            function playFlipSound() {
+                if (!soundEnabled || !flipSound) return;
+                
+                try {
+                    // Создаем клон звука для одновременного воспроизведения
+                    const soundClone = flipSound.cloneNode();
+                    soundClone.volume = 0.4;
+                    // Добавляем небольшое случайное смещение по времени
+                    setTimeout(() => {
+                        soundClone.play().catch(e => console.log('Ошибка воспроизведения звука переворота'));
+                    }, Math.random() * 50);
+                } catch (e) {
+                    console.error('Ошибка воспроизведения звука переворота:', e);
+                }
+            }
+            
+            // Воспроизведение звука игрушки
+            function playToySound(toyName) {
+                if (!soundEnabled || !toySounds[toyName]) return;
+                
+                try {
+                    const sound = toySounds[toyName];
+                    // Создаем клон звука для одновременного воспроизведения
+                    const soundClone = sound.cloneNode();
+                    soundClone.volume = 0.5;
+                    // Небольшая задержка для лучшего восприятия
+                    setTimeout(() => {
+                        soundClone.play().catch(e => console.log(`Ошибка воспроизведения звука ${toyName}`));
+                    }, 100);
+                } catch (e) {
+                    console.error('Ошибка воспроизведения звука игрушки:', e);
+                }
+            }
+            
+            // Воспроизведение победного звука
+            function playWinSound() {
+                if (!soundEnabled || !winSound) return;
+                
+                try {
+                    winSound.currentTime = 0;
+                    winSound.play().catch(e => console.log('Ошибка воспроизведения победного звука'));
+                } catch (e) {
+                    console.error('Ошибка воспроизведения победного звука:', e);
+                }
+            }
+            
+            // Начало новой игры
+            function startNewGame() {
+                // Сбрасываем состояние игры
+                flippedCards = [];
+                moves = 0;
+                matchedPairs = 0;
+                gameStarted = false;
+                movesCount.textContent = moves;
+                timer.textContent = '00:00';
+                clearInterval(timerInterval);
+                
+                // Останавливаем фоновую музыку
+                if (backgroundMusic) {
+                    backgroundMusic.pause();
+                    backgroundMusic.currentTime = 0;
+                }
+                
+                // Скрываем победное сообщение
+                winMessage.style.display = 'none';
+                
+                // Создаем новые карточки
+                createCards();
+            }
+            
+            // Переключение звука
+            function toggleSound() {
+                soundEnabled = !soundEnabled;
+                soundBtn.textContent = `Звук: ${soundEnabled ? 'Вкл' : 'Выкл'}`;
+                
+                // Управление фоновой музыкой
+                if (soundEnabled && gameStarted) {
+                    playBackgroundMusic();
+                } else if (backgroundMusic) {
+                    backgroundMusic.pause();
+                }
+            }
+            
+            // Обработчики событий
+            restartBtn.addEventListener('click', startNewGame);
+            playAgainBtn.addEventListener('click', startNewGame);
+            soundBtn.addEventListener('click', toggleSound);
+            
+            // Адаптация к изменению размера окна
+            window.addEventListener('resize', createCards);
+            window.addEventListener('orientationchange', function() {
+                setTimeout(createCards, 100);
+            });
+            
+            // Предотвращение масштабирования на мобильных
+            document.addEventListener('touchmove', function(e) {
+                if (e.scale !== 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // Начало игры при загрузке страницы
+            initAudio();
+            startNewGame();
+        });
+    </script>
+</body>
+</html>
