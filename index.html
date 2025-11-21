@@ -383,6 +383,7 @@
             let seconds = 0;
             let soundEnabled = true;
             let backgroundMusic;
+            let audioContextUnlocked = false;
             
             // Звуковые объекты для каждой игрушки
             const toySounds = {};
@@ -408,10 +409,32 @@
                 { name: 'unicorn', sound: 'unicorn' }
             ];
 
-            // Функция для определения типа устройства
-            function isTouchDevice() {
-                return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            // Разблокировка аудио при первом касании
+            function unlockAudio() {
+                if (audioContextUnlocked) return;
+                
+                try {
+                    // Создаем и играем пустой звук для разблокировки аудио
+                    const audio = new Audio();
+                    audio.volume = 0;
+                    audio.play().then(() => {
+                        audioContextUnlocked = true;
+                        console.log('Audio context unlocked');
+                    }).catch(e => {
+                        console.log('Audio unlock failed:', e);
+                    });
+                } catch (e) {
+                    console.log('Audio unlock error:', e);
+                }
+                
+                // Удаляем обработчики после первой попытки
+                document.body.removeEventListener('touchstart', unlockAudio);
+                document.body.removeEventListener('click', unlockAudio);
             }
+            
+            // Добавляем обработчики для разблокировки аудио
+            document.body.addEventListener('touchstart', unlockAudio, { passive: true });
+            document.body.addEventListener('click', unlockAudio);
             
             // Инициализация аудио
             function initAudio() {
@@ -445,14 +468,10 @@
             
             // Воспроизведение фоновой музыки
             function playBackgroundMusic() {
-                if (soundEnabled && backgroundMusic) {
-                    // Для мобильных устройств требуется взаимодействие пользователя
-                    document.body.addEventListener('click', function startMusic() {
-                        backgroundMusic.play().catch(e => {
-                            console.log('Автовоспроизведение заблокировано');
-                        });
-                        document.body.removeEventListener('click', startMusic);
-                    }, { once: true });
+                if (soundEnabled && backgroundMusic && audioContextUnlocked) {
+                    backgroundMusic.play().catch(e => {
+                        console.log('Фоновая музыка заблокирована:', e);
+                    });
                 }
             }
             
@@ -487,36 +506,18 @@
                         </div>
                     `;
                     
-                    // Добавляем обработчики для touch и click
-                    if (isTouchDevice()) {
-                        // Для touch-устройств
-                        card.addEventListener('touchstart', handleCardTouch, { passive: true });
-                    } else {
-                        // Для desktop
-                        card.addEventListener('click', handleCardClick);
-                    }
-                    
-                    // Добавляем обработчик click для совместимости
-                    card.addEventListener('click', handleCardClick);
+                    // Единый обработчик для всех устройств
+                    card.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        flipCard(card);
+                    });
                     
                     gameBoard.appendChild(card);
                 });
                 
                 // Сохраняем ссылки на все карточки
                 cards = Array.from(document.querySelectorAll('.card'));
-            }
-            
-            // Обработчик для touch устройств
-            function handleCardTouch(e) {
-                e.preventDefault();
-                const card = e.currentTarget;
-                flipCard(card);
-            }
-            
-            // Обработчик для click
-            function handleCardClick(e) {
-                const card = e.currentTarget;
-                flipCard(card);
             }
             
             // Переворот карточки
@@ -543,12 +544,12 @@
                 flippedCards.push(card);
                 
                 // Воспроизводим звук переворота
-                if (soundEnabled) {
+                if (soundEnabled && audioContextUnlocked) {
                     playFlipSound();
                 }
                 
                 // Воспроизводим звук игрушки при открытии карточки
-                if (soundEnabled) {
+                if (soundEnabled && audioContextUnlocked) {
                     playToySound(card.dataset.toy);
                 }
                 
@@ -656,10 +657,9 @@
             
             // Воспроизведение звука переворота карточки
             function playFlipSound() {
-                if (!soundEnabled || !flipSound) return;
+                if (!soundEnabled || !flipSound || !audioContextUnlocked) return;
                 
                 try {
-                    // Создаем клон звука для одновременного воспроизведения
                     const soundClone = flipSound.cloneNode();
                     soundClone.volume = 0.4;
                     soundClone.play().catch(e => console.log('Ошибка воспроизведения звука переворота'));
@@ -670,11 +670,10 @@
             
             // Воспроизведение звука игрушки
             function playToySound(toyName) {
-                if (!soundEnabled || !toySounds[toyName]) return;
+                if (!soundEnabled || !toySounds[toyName] || !audioContextUnlocked) return;
                 
                 try {
                     const sound = toySounds[toyName];
-                    // Создаем клон звука для одновременного воспроизведения
                     const soundClone = sound.cloneNode();
                     soundClone.volume = 0.5;
                     soundClone.play().catch(e => console.log(`Ошибка воспроизведения звука ${toyName}`));
@@ -685,7 +684,7 @@
             
             // Воспроизведение победного звука
             function playWinSound() {
-                if (!soundEnabled || !winSound) return;
+                if (!soundEnabled || !winSound || !audioContextUnlocked) return;
                 
                 try {
                     winSound.currentTime = 0;
@@ -736,13 +735,6 @@
             restartBtn.addEventListener('click', startNewGame);
             playAgainBtn.addEventListener('click', startNewGame);
             soundBtn.addEventListener('click', toggleSound);
-            
-            // Оптимизация для мобильных
-            document.addEventListener('touchmove', function(e) {
-                if (e.scale !== 1) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
             
             // Предотвращение контекстного меню на мобильных
             document.addEventListener('contextmenu', function(e) {
