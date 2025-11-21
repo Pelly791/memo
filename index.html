@@ -409,32 +409,34 @@
                 { name: 'unicorn', sound: 'unicorn' }
             ];
 
-            // Разблокировка аудио при первом касании
+            // Разблокировка аудио
             function unlockAudio() {
                 if (audioContextUnlocked) return;
                 
                 try {
-                    // Создаем и играем пустой звук для разблокировки аудио
+                    // Играем тихий звук для разблокировки
                     const audio = new Audio();
-                    audio.volume = 0;
-                    audio.play().then(() => {
-                        audioContextUnlocked = true;
-                        console.log('Audio context unlocked');
-                    }).catch(e => {
-                        console.log('Audio unlock failed:', e);
-                    });
+                    audio.volume = 0.01;
+                    audio.play()
+                        .then(() => {
+                            audioContextUnlocked = true;
+                            console.log('✅ Audio unlocked');
+                        })
+                        .catch(err => {
+                            console.log('🔇 Audio unlock failed:', err);
+                        });
                 } catch (e) {
-                    console.log('Audio unlock error:', e);
+                    console.log('⚠️ Audio unlock error:', e);
                 }
-                
-                // Удаляем обработчики после первой попытки
-                document.body.removeEventListener('touchstart', unlockAudio);
-                document.body.removeEventListener('click', unlockAudio);
             }
             
-            // Добавляем обработчики для разблокировки аудио
-            document.body.addEventListener('touchstart', unlockAudio, { passive: true });
-            document.body.addEventListener('click', unlockAudio);
+            // Разблокируем аудио при клике на любую кнопку (дополнительная гарантия)
+            function setupButtonAudioUnlock() {
+                const allButtons = document.querySelectorAll('button');
+                allButtons.forEach(btn => {
+                    btn.addEventListener('click', unlockAudio, { once: true });
+                });
+            }
             
             // Инициализация аудио
             function initAudio() {
@@ -522,6 +524,9 @@
             
             // Переворот карточки
             function flipCard(card) {
+                // Гарантированно разблокируем аудио при первом действии в игре
+                unlockAudio();
+                
                 // Если игра не начата, запускаем таймер
                 if (!gameStarted) {
                     startTimer();
@@ -607,7 +612,7 @@
                 clearInterval(timerInterval);
                 
                 // Воспроизводим победный звук
-                if (soundEnabled) {
+                if (soundEnabled && audioContextUnlocked) {
                     playWinSound();
                     if (backgroundMusic) {
                         backgroundMusic.pause();
@@ -735,6 +740,9 @@
             restartBtn.addEventListener('click', startNewGame);
             playAgainBtn.addEventListener('click', startNewGame);
             soundBtn.addEventListener('click', toggleSound);
+            
+            // Настройка разблокировки аудио для кнопок
+            setupButtonAudioUnlock();
             
             // Предотвращение контекстного меню на мобильных
             document.addEventListener('contextmenu', function(e) {
