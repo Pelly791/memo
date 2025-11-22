@@ -384,6 +384,11 @@
             let soundEnabled = true;
             let backgroundMusic;
             
+            // Звуковые объекты для каждой игрушки
+            const toySounds = {};
+            let flipSound;
+            let winSound;
+            
             // Список игрушек (15 пар) с соответствием изображений и звуков
             const toys = [
                 { name: 'ball', sound: 'ball' },
@@ -403,6 +408,11 @@
                 { name: 'unicorn', sound: 'unicorn' }
             ];
 
+            // Функция для определения типа устройства
+            function isTouchDevice() {
+                return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            }
+            
             // Инициализация аудио
             function initAudio() {
                 try {
@@ -410,6 +420,22 @@
                     backgroundMusic = new Audio('audio/body.mp3');
                     backgroundMusic.loop = true;
                     backgroundMusic.volume = 0.3;
+                    
+                    // Звук переворота карточки
+                    flipSound = new Audio('audio/flash.mp3');
+                    flipSound.volume = 0.4;
+                    
+                    // Звук победы
+                    winSound = new Audio('audio/win.mp3');
+                    winSound.volume = 0.5;
+                    
+                    // Предзагрузка звуков для каждой игрушки
+                    toys.forEach(toy => {
+                        const audio = new Audio(`audio/${toy.sound}.wav`);
+                        audio.volume = 0.5;
+                        audio.preload = 'auto';
+                        toySounds[toy.name] = audio;
+                    });
                 } catch (e) {
                     console.error('Ошибка инициализации аудио:', e);
                     soundEnabled = false;
@@ -420,9 +446,13 @@
             // Воспроизведение фоновой музыки
             function playBackgroundMusic() {
                 if (soundEnabled && backgroundMusic) {
-                    backgroundMusic.play().catch(e => {
-                        console.log('Фоновая музыка заблокирована:', e);
-                    });
+                    // Для мобильных устройств требуется взаимодействие пользователя
+                    document.body.addEventListener('click', function startMusic() {
+                        backgroundMusic.play().catch(e => {
+                            console.log('Автовоспроизведение заблокировано');
+                        });
+                        document.body.removeEventListener('click', startMusic);
+                    }, { once: true });
                 }
             }
             
@@ -457,18 +487,36 @@
                         </div>
                     `;
                     
-                    // Единый обработчик для всех устройств
-                    card.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        flipCard(card);
-                    });
+                    // Добавляем обработчики для touch и click
+                    if (isTouchDevice()) {
+                        // Для touch-устройств
+                        card.addEventListener('touchstart', handleCardTouch, { passive: true });
+                    } else {
+                        // Для desktop
+                        card.addEventListener('click', handleCardClick);
+                    }
+                    
+                    // Добавляем обработчик click для совместимости
+                    card.addEventListener('click', handleCardClick);
                     
                     gameBoard.appendChild(card);
                 });
                 
                 // Сохраняем ссылки на все карточки
                 cards = Array.from(document.querySelectorAll('.card'));
+            }
+            
+            // Обработчик для touch устройств
+            function handleCardTouch(e) {
+                e.preventDefault();
+                const card = e.currentTarget;
+                flipCard(card);
+            }
+            
+            // Обработчик для click
+            function handleCardClick(e) {
+                const card = e.currentTarget;
+                flipCard(card);
             }
             
             // Переворот карточки
@@ -608,12 +656,13 @@
             
             // Воспроизведение звука переворота карточки
             function playFlipSound() {
-                if (!soundEnabled) return;
+                if (!soundEnabled || !flipSound) return;
                 
                 try {
-                    const sound = new Audio('audio/flash.mp3');
-                    sound.volume = 0.4;
-                    sound.play().catch(e => console.log("Звук переворота не проигран:", e));
+                    // Создаем клон звука для одновременного воспроизведения
+                    const soundClone = flipSound.cloneNode();
+                    soundClone.volume = 0.4;
+                    soundClone.play().catch(e => console.log('Ошибка воспроизведения звука переворота'));
                 } catch (e) {
                     console.error('Ошибка воспроизведения звука переворота:', e);
                 }
@@ -621,12 +670,14 @@
             
             // Воспроизведение звука игрушки
             function playToySound(toyName) {
-                if (!soundEnabled) return;
+                if (!soundEnabled || !toySounds[toyName]) return;
                 
                 try {
-                    const sound = new Audio(`audio/${toys.find(t => t.name === toyName).sound}.wav`);
-                    sound.volume = 0.5;
-                    sound.play().catch(e => console.log(`Звук ${toyName} не проигран:`, e));
+                    const sound = toySounds[toyName];
+                    // Создаем клон звука для одновременного воспроизведения
+                    const soundClone = sound.cloneNode();
+                    soundClone.volume = 0.5;
+                    soundClone.play().catch(e => console.log(`Ошибка воспроизведения звука ${toyName}`));
                 } catch (e) {
                     console.error('Ошибка воспроизведения звука игрушки:', e);
                 }
@@ -634,12 +685,11 @@
             
             // Воспроизведение победного звука
             function playWinSound() {
-                if (!soundEnabled) return;
+                if (!soundEnabled || !winSound) return;
                 
                 try {
-                    const sound = new Audio('audio/win.mp3');
-                    sound.volume = 0.5;
-                    sound.play().catch(e => console.log("Победный звук не проигран:", e));
+                    winSound.currentTime = 0;
+                    winSound.play().catch(e => console.log('Ошибка воспроизведения победного звука'));
                 } catch (e) {
                     console.error('Ошибка воспроизведения победного звука:', e);
                 }
@@ -686,6 +736,13 @@
             restartBtn.addEventListener('click', startNewGame);
             playAgainBtn.addEventListener('click', startNewGame);
             soundBtn.addEventListener('click', toggleSound);
+            
+            // Оптимизация для мобильных
+            document.addEventListener('touchmove', function(e) {
+                if (e.scale !== 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
             
             // Предотвращение контекстного меню на мобильных
             document.addEventListener('contextmenu', function(e) {
